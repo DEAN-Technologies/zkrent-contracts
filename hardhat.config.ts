@@ -30,7 +30,12 @@ const config: HardhatUserConfig = {
     sepolia: {
       url: "https://ethereum-sepolia-rpc.publicnode.com",
       accounts: privateKey(),
-      gasMultiplier: 1.1,
+      gasMultiplier: 5,
+    },
+    auroratest: {
+      url: "https://testnet.aurora.dev",
+      accounts: privateKey(),
+      gasMultiplier: 1.2,
     },
     chapel: {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545",

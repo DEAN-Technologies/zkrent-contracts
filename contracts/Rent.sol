@@ -21,6 +21,8 @@ contract Rent {
         uint256 bookingStartsAt;
         uint256 bookingEndsAt;
         uint256 pricePerDay;
+        uint256 numberOfRooms;
+        uint256 area;
         uint256 id;
         bool isBooked;
     }
@@ -31,6 +33,8 @@ contract Rent {
         string description,
         string imgUrl,
         uint256 pricePerDay,
+        uint256 numberOfRooms,
+        uint256 area,
         uint256 id
     );
 
@@ -48,7 +52,9 @@ contract Rent {
         string memory propertyAddress,
         string memory description,
         string memory imgUrl,
-        uint256 pricePerDay
+        uint256 pricePerDay,
+        uint256 numberOfRooms,
+        uint256 area
     ) public {
         PropertyInfo storage newProperty = properties[counter];
 
@@ -72,7 +78,9 @@ contract Rent {
             description,
             imgUrl,
             pricePerDay,
-            counter
+            counter,
+            numberOfRooms,
+            area
         );
         counter++;
     }
