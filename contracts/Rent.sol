@@ -17,12 +17,11 @@ contract Rent {
         string propertyAddress;
         string description;
         string imgUrl;
+        uint256 pricePerDay;
         uint64 bookingStartsAt;
         uint64 bookingEndsAt;
-        uint256 pricePerDay;
         uint64 numberOfRooms;
         uint64 area;
-        bool isBooked;
         bool isActive;
     }
 
@@ -34,11 +33,11 @@ contract Rent {
         uint256 pricePerDay,
         uint64 numberOfRooms,
         uint64 area,
-        uint256 id
+        uint256 propertyId
     );
 
     event PropertyBookedEvent(
-        uint256 id,
+        uint256 propertyId,
         address guest,
         uint64 numberOfDays,
         uint256 price
@@ -52,7 +51,7 @@ contract Rent {
 
     modifier onlyNotBooked (uint256 propertyId) {
         Property storage property = properties[propertyId];
-        require(!property.isBooked, "Property is booked");
+        require(property.guest == address(0), "Property is booked");
         _;
     }
 
@@ -63,7 +62,7 @@ contract Rent {
         string memory propertyAddress,
         string memory description,
         string memory imgUrl,
-        uint64 pricePerDay,
+        uint256 pricePerDay,
         uint64 numberOfRooms,
         uint64 area
     ) public returns (uint256) {
@@ -75,7 +74,7 @@ contract Rent {
         newProperty.description = description;
         newProperty.imgUrl = imgUrl;
         newProperty.pricePerDay = pricePerDay;
-        newProperty.isBooked = false;
+        newProperty.isActive = true;
         newProperty.bookingStartsAt = 0;
         newProperty.bookingEndsAt = 0;
         newProperty.numberOfRooms = numberOfRooms;
@@ -102,16 +101,16 @@ contract Rent {
     ) public onlyPropertyOwner(propertyId)
              onlyNotBooked(propertyId) {
         Property storage property = properties[propertyId];
-        require(property.isActive, "Propertyhas been already unlisted");
+        require(property.isActive, "Property has been already unlisted");
         property.isActive = false;
     }
 
     function getDuePrice(
-        uint256 id,
+        uint256 propertyId,
         uint256 startDate,
         uint256 endDate
     ) public view returns (uint256) {
-        Property storage property = properties[id];
+        Property storage property = properties[propertyId];
 
         uint256 numberOfDays = (endDate - startDate) / 86400000;
         return numberOfDays * property.pricePerDay;
@@ -130,7 +129,6 @@ contract Rent {
         );
         payable(properties[propertyId].owner).transfer(msg.value);
 
-        properties[propertyId].isBooked = true;
         properties[propertyId].bookingStartsAt = startDate;
         properties[propertyId].bookingEndsAt = endDate;
         properties[propertyId].guest = msg.sender;
@@ -143,17 +141,11 @@ contract Rent {
         );
     }
 
-    function unBookProperty(uint256 propertyId) public {
-        require(
-            properties[propertyId].owner == msg.sender,
-            "Only the Property Owner can unbook the property"
-        );
-
-        require(
-            properties[propertyId].isBooked == true,
-            "Property is not booked"
-        );
-
-        properties[propertyId].isBooked = false;
+    function unBookProperty(
+        uint256 propertyId
+    ) public onlyNotBooked(propertyId)
+             onlyPropertyOwner(propertyId)
+    {
+        properties[propertyId].guest = address(0);
     }
 }

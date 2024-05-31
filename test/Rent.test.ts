@@ -43,6 +43,7 @@ describe("Rent", () => {
                         68);
       expect(await rent.counter()).to.eq(1);
     })
+
     it("should return valid id", async () => {
       const id1 = await rent.listProperty.staticCall("home", 
                         "home address",
@@ -70,6 +71,47 @@ describe("Rent", () => {
 
       expect(id1).to.eq(1);
       expect(id2).to.eq(2);
+    })
+
+    it("should set parameters correctly", async () => {
+      await rent.listProperty("home", 
+                        "home address",
+                        "some description",
+                        "imgUrl",
+                        10,
+                        2,
+                        68);
+
+      expect((await rent.properties(1)).name).to.eq("home");
+      expect((await rent.properties(1)).propertyAddress).to.eq("home address");
+      expect((await rent.properties(1)).description).to.eq("some description");
+      expect((await rent.properties(1)).imgUrl).to.eq("imgUrl");
+      expect((await rent.properties(1)).pricePerDay).to.eq(10);
+      expect((await rent.properties(1)).numberOfRooms).to.eq(2);
+      expect((await rent.properties(1)).area).to.eq(68);
+
+      expect((await rent.properties(1)).isActive).to.eq(true);
+      expect((await rent.properties(1)).bookingStartsAt).to.eq(0);
+      expect((await rent.properties(1)).bookingEndsAt).to.eq(0);
+      expect((await rent.properties(1)).owner).to.eq(OWNER);
+      expect((await rent.properties(1)).guest).to.eq("0x0000000000000000000000000000000000000000");
+    })
+  })
+
+  describe("#unlistProperty", () => {
+    it("should unlist correctly", async () => {
+      await rent.listProperty("home", 
+                  "home address",
+                  "some description",
+                  "imgUrl",
+                  10,
+                  2,
+                  68);
+      expect((await rent.properties(1)).isActive).to.eq(true);
+      
+      await rent.unlistProperty(1);
+
+      expect((await rent.properties(1)).isActive).to.eq(false);
     })
   })
 });
