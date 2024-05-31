@@ -43,6 +43,17 @@ contract Rent {
         uint256 price
     );
 
+    modifier onlyPropertyOwner (uint256 propertyId) {
+        address propertyOwner = properties[propertyId].owner;
+        require(propertyOwner == msg.sender, "Only property owner");
+        _;
+    }
+
+    modifier onlyNotBooked (uint256 propertyId) {
+        PropertyInfo storage property = properties[propertyId];
+        require(!property.isBooked, "Property is booked");
+        _;
+    }
 
     mapping(uint256 => PropertyInfo) public properties;
     mapping(uint256 => bool) isPropertyActive;
@@ -84,6 +95,12 @@ contract Rent {
         );
 
         return counter;
+    }
+
+    function unlistProperty(
+        uint256 propertyId
+    ) public onlyPropertyOwner(propertyId) {
+
     }
 
     function getDuePrice(
