@@ -28,9 +28,9 @@ const config: HardhatUserConfig = {
       gasMultiplier: 1.2,
     },
     sepolia: {
-      url: "https://ethereum-sepolia-rpc.publicnode.com",
+      url: "https://endpoints.omniatech.io/v1/eth/sepolia/public",
       accounts: privateKey(),
-      gasMultiplier: 5,
+      gasMultiplier: 10,
     },
     auroratest: {
       url: "https://testnet.aurora.dev",

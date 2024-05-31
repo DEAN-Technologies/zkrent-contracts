@@ -4,7 +4,6 @@ pragma solidity ^0.8.19;
 contract Rent {
     address public owner;
     uint256 public counter;
-    uint256[] public rentalIds;
 
     constructor() {
         counter = 0;
@@ -18,12 +17,11 @@ contract Rent {
         string propertyAddress;
         string description;
         string imgUrl;
-        uint256 bookingStartsAt;
-        uint256 bookingEndsAt;
+        uint64 bookingStartsAt;
+        uint64 bookingEndsAt;
         uint256 pricePerDay;
-        uint256 numberOfRooms;
-        uint256 area;
-        uint256 id;
+        uint64 numberOfRooms;
+        uint64 area;
         bool isBooked;
     }
 
@@ -33,29 +31,32 @@ contract Rent {
         string description,
         string imgUrl,
         uint256 pricePerDay,
-        uint256 numberOfRooms,
-        uint256 area,
+        uint64 numberOfRooms,
+        uint64 area,
         uint256 id
     );
-
-    mapping(uint256 => PropertyInfo) public properties;
 
     event PropertyBookedEvent(
         uint256 id,
         address guest,
-        uint256 numberOfDays,
+        uint64 numberOfDays,
         uint256 price
     );
+
+
+    mapping(uint256 => PropertyInfo) public properties;
+    mapping(uint256 => bool) isPropertyActive;
 
     function listProperty(
         string memory name,
         string memory propertyAddress,
         string memory description,
         string memory imgUrl,
-        uint256 pricePerDay,
-        uint256 numberOfRooms,
-        uint256 area
-    ) public {
+        uint64 pricePerDay,
+        uint64 numberOfRooms,
+        uint64 area
+    ) public returns (uint256) {
+        counter += 1;
         PropertyInfo storage newProperty = properties[counter];
 
         newProperty.name = name;
@@ -63,14 +64,13 @@ contract Rent {
         newProperty.description = description;
         newProperty.imgUrl = imgUrl;
         newProperty.pricePerDay = pricePerDay;
-        newProperty.id = counter;
         newProperty.isBooked = false;
         newProperty.bookingStartsAt = 0;
         newProperty.bookingEndsAt = 0;
+        newProperty.numberOfRooms = numberOfRooms;
+        newProperty.area = area;
         newProperty.owner = msg.sender;
         newProperty.guest = address(0);
-
-        rentalIds.push(counter);
 
         emit PropertyListedEvent(
             name,
@@ -78,11 +78,12 @@ contract Rent {
             description,
             imgUrl,
             pricePerDay,
-            counter,
             numberOfRooms,
-            area
+            area,
+            counter
         );
-        counter++;
+
+        return counter;
     }
 
     function getDuePrice(
@@ -98,10 +99,10 @@ contract Rent {
 
     function bookProperty(
         uint256 propertyId,
-        uint256 startDate,
-        uint256 endDate
+        uint64 startDate,
+        uint64 endDate
     ) public payable {
-        uint256 numberOfDays = (endDate - startDate) / 86400000;
+        uint64 numberOfDays = (endDate - startDate) / 86400000;
 
         require(
             msg.value >= numberOfDays * properties[propertyId].pricePerDay,
