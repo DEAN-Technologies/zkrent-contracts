@@ -10,7 +10,7 @@ contract Rent {
         owner = msg.sender;
     }
 
-    struct PropertyInfo {
+    struct Property {
         address owner;
         address guest;
         string name;
@@ -23,6 +23,7 @@ contract Rent {
         uint64 numberOfRooms;
         uint64 area;
         bool isBooked;
+        bool isActive;
     }
 
     event PropertyListedEvent(
@@ -50,13 +51,12 @@ contract Rent {
     }
 
     modifier onlyNotBooked (uint256 propertyId) {
-        PropertyInfo storage property = properties[propertyId];
+        Property storage property = properties[propertyId];
         require(!property.isBooked, "Property is booked");
         _;
     }
 
-    mapping(uint256 => PropertyInfo) public properties;
-    mapping(uint256 => bool) isPropertyActive;
+    mapping(uint256 => Property) public properties;
 
     function listProperty(
         string memory name,
@@ -68,7 +68,7 @@ contract Rent {
         uint64 area
     ) public returns (uint256) {
         counter += 1;
-        PropertyInfo storage newProperty = properties[counter];
+        Property storage newProperty = properties[counter];
 
         newProperty.name = name;
         newProperty.propertyAddress = propertyAddress;
@@ -99,8 +99,11 @@ contract Rent {
 
     function unlistProperty(
         uint256 propertyId
-    ) public onlyPropertyOwner(propertyId) {
-
+    ) public onlyPropertyOwner(propertyId)
+             onlyNotBooked(propertyId) {
+        Property storage property = properties[propertyId];
+        require(property.isActive, "Propertyhas been already unlisted");
+        property.isActive = false;
     }
 
     function getDuePrice(
@@ -108,7 +111,7 @@ contract Rent {
         uint256 startDate,
         uint256 endDate
     ) public view returns (uint256) {
-        PropertyInfo storage property = properties[id];
+        Property storage property = properties[id];
 
         uint256 numberOfDays = (endDate - startDate) / 86400000;
         return numberOfDays * property.pricePerDay;
