@@ -82,19 +82,19 @@ describe("Rent", () => {
                         2,
                         68);
 
-      expect((await rent.properties(1)).name).to.eq("home");
-      expect((await rent.properties(1)).propertyAddress).to.eq("home address");
-      expect((await rent.properties(1)).description).to.eq("some description");
-      expect((await rent.properties(1)).imgUrl).to.eq("imgUrl");
-      expect((await rent.properties(1)).pricePerDay).to.eq(10);
-      expect((await rent.properties(1)).numberOfRooms).to.eq(2);
-      expect((await rent.properties(1)).area).to.eq(68);
+      expect((await rent.properties(0)).name).to.eq("home");
+      expect((await rent.properties(0)).propertyAddress).to.eq("home address");
+      expect((await rent.properties(0)).description).to.eq("some description");
+      expect((await rent.properties(0)).imgUrl).to.eq("imgUrl");
+      expect((await rent.properties(0)).pricePerDay).to.eq(10);
+      expect((await rent.properties(0)).numberOfRooms).to.eq(2);
+      expect((await rent.properties(0)).area).to.eq(68);
 
-      expect((await rent.properties(1)).isActive).to.eq(true);
-      expect((await rent.properties(1)).bookingStartsAt).to.eq(0);
-      expect((await rent.properties(1)).bookingEndsAt).to.eq(0);
-      expect((await rent.properties(1)).owner).to.eq(OWNER);
-      expect((await rent.properties(1)).guest).to.eq("0x0000000000000000000000000000000000000000");
+      expect((await rent.properties(0)).isActive).to.eq(true);
+      expect((await rent.properties(0)).bookingStartsAt).to.eq(0);
+      expect((await rent.properties(0)).bookingEndsAt).to.eq(0);
+      expect((await rent.properties(0)).owner).to.eq(OWNER);
+      expect((await rent.properties(0)).guest).to.eq("0x0000000000000000000000000000000000000000");
     })
   })
 
@@ -107,11 +107,11 @@ describe("Rent", () => {
                   10,
                   2,
                   68);
-      expect((await rent.properties(1)).isActive).to.eq(true);
+      expect((await rent.properties(0)).isActive).to.eq(true);
       
-      await rent.unlistProperty(1);
+      await rent.unlistProperty(0);
 
-      expect((await rent.properties(1)).isActive).to.eq(false);
+      expect((await rent.properties(0)).isActive).to.eq(false);
     })
   })
 });

@@ -66,7 +66,6 @@ contract Rent {
         uint64 numberOfRooms,
         uint64 area
     ) public returns (uint256) {
-        counter += 1;
         Property storage newProperty = properties[counter];
 
         newProperty.name = name;
@@ -92,7 +91,8 @@ contract Rent {
             area,
             counter
         );
-
+        counter += 1;
+        
         return counter;
     }
 
