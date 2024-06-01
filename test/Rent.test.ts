@@ -5,6 +5,9 @@ import { Reverter } from "@/test/helpers/reverter";
 import { wei } from "@/scripts/utils/utils";
 import { Rent } from "@ethers-v6";
 import exp from "constants";
+import { randomInt } from "crypto";
+
+const MILLISECONDS_IN_DAY = 60 * 60 * 24 * 1000;
 
 describe("Rent", () => {
   const reverter = new Reverter();
@@ -130,6 +133,25 @@ describe("Rent", () => {
       // Expect the property to stay active
       expect((await rent.properties(0)).isActive).to.eq(true);
     })
+
+    it("should not unlist (property is booked)", async () => {
+      await rent.listProperty("home", 
+                  "home address",
+                  "some description",
+                  "imgUrl",
+                  10,
+                  2,
+                  68);
+      // Expect the property to be active
+      expect((await rent.properties(0)).isActive).to.eq(true);
+      // Booking the property
+      await rent.connect(SECOND).bookProperty(0, 86400000, 86400000 * 2, { value: 10} );
+      // Trying to unlist (propertiy is booked)
+      await expect(rent.unlistProperty(0)).to.revertedWith("Only not booked");
+      // Expect the property to stay active
+      expect((await rent.properties(0)).isActive).to.eq(true);
+    })
+    
   })
 
   describe("#unBookPropertyByGuest", () => {
@@ -168,7 +190,7 @@ describe("Rent", () => {
       // Except newly created property to guest == address(0)
       expect((await rent.properties(0)).guest).to.eq("0x0000000000000000000000000000000000000000");
       // Booking property by the SECOND
-      await rent.connect(SECOND).bookProperty(0, 86400000, 86400000 * 2, { value: 10} );
+      await rent.connect(SECOND).bookProperty(0, MILLISECONDS_IN_DAY, MILLISECONDS_IN_DAY * 2, { value: 10} );
       // Expect the SECOND account to be a property guest
       expect((await rent.properties(0)).guest).to.eq(SECOND);
       // Expect owner to unbook the property and return the deposit to the guest
@@ -178,5 +200,38 @@ describe("Rent", () => {
     })
   })
 
-  // describe("#unBookPropertyByOwner")
+  describe("#getPropertyRentPrice", () => {
+    it("should calculate rent price properly (constant)", async() => {
+      await rent.listProperty("home", 
+                        "home address",
+                        "some description",
+                        "imgUrl",
+                        10,
+                        2,
+                        68);
+      await rent.connect(SECOND).bookProperty(0, MILLISECONDS_IN_DAY, MILLISECONDS_IN_DAY * 2, { value: 10} );
+      const price = rent.getPropertyRentPrice(0);
+      expect(await price).to.eq(10);
+    })
+
+    it("should calculate rent price properly (random)", async() => {
+      const price = randomInt(100000) + 1;
+      await rent.listProperty("home", 
+                        "home address",
+                        "some description",
+                        "imgUrl",
+                        price,
+                        2,
+                        68);
+      const start = randomInt(100) * MILLISECONDS_IN_DAY;
+      const end = randomInt(100) * MILLISECONDS_IN_DAY + start;
+      const calculatedPrice = ((end - start) / MILLISECONDS_IN_DAY) * price;
+
+      await rent.connect(SECOND).bookProperty(0, start, end, { value: calculatedPrice} );
+
+      const contractPrice = rent.getPropertyRentPrice(0);
+      
+      expect(await contractPrice).to.eq(calculatedPrice);
+    })
+  })
 });

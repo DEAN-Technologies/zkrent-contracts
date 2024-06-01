@@ -117,16 +117,6 @@ contract Rent {
         property.isActive = false;
     }
 
-    function getDuePrice(
-        uint256 propertyId,
-        uint256 startDate,
-        uint256 endDate
-    ) public view returns (uint256) {
-        Property storage property = properties[propertyId];
-
-        uint256 numberOfDays = (endDate - startDate) / 86400000;
-        return numberOfDays * property.pricePerDay;
-    }
 
     function bookProperty(
         uint256 propertyId,
