@@ -43,15 +43,27 @@ contract Rent {
         uint256 price
     );
 
-    modifier onlyPropertyOwner (uint256 propertyId) {
-        address propertyOwner = properties[propertyId].owner;
-        require(propertyOwner == msg.sender, "Only property owner");
+    modifier onlyPropertyOwner(uint256 propertyId) {
+        Property storage property = properties[propertyId];
+        require(property.owner == msg.sender, "Only property owner");
         _;
     }
 
-    modifier onlyNotBooked (uint256 propertyId) {
+    modifier onlyBooked(uint256 propertyId) {
         Property storage property = properties[propertyId];
-        require(property.guest == address(0), "Property is booked");
+        require(property.guest != address(0), "Only booked");
+        _;
+    }
+
+    modifier onlyNotBooked(uint256 propertyId) {
+        Property storage property = properties[propertyId];
+        require(property.guest == address(0), "Only not booked");
+        _;
+    }
+
+    modifier onlyPropertyGuest(uint256 propertyId) {
+        Property storage property = properties[propertyId];
+        require(property.guest == msg.sender, "Only property guest");
         _;
     }
 
@@ -92,7 +104,7 @@ contract Rent {
             counter
         );
         counter += 1;
-        
+
         return counter;
     }
 
@@ -120,7 +132,7 @@ contract Rent {
         uint256 propertyId,
         uint64 startDate,
         uint64 endDate
-    ) public payable {
+    ) public payable onlyNotBooked(propertyId) {
         uint64 numberOfDays = (endDate - startDate) / 86400000;
 
         require(
@@ -141,10 +153,37 @@ contract Rent {
         );
     }
 
-    function unBookProperty(
+    function getPropertyRentPrice(
         uint256 propertyId
-    ) public onlyNotBooked(propertyId)
+    ) public view onlyBooked(propertyId) returns (uint256) {
+        Property storage property = properties[propertyId];
+
+        uint64 numberOfDays = (property.bookingEndsAt - property.bookingStartsAt) / 86400000;
+        return numberOfDays * properties[propertyId].pricePerDay;
+    }
+
+    function unBookPropertyByOwner(
+        uint256 propertyId
+    ) public payable
+             onlyBooked(propertyId)
              onlyPropertyOwner(propertyId)
+    {
+        uint256 rentPrice = getPropertyRentPrice(propertyId);
+
+        require(
+            msg.value >= rentPrice,
+            "Send more ETH."
+        );
+        payable(properties[propertyId].guest).transfer(msg.value);
+
+        properties[propertyId].guest = address(0);
+    }
+
+    function unBookPropertyByGuest(
+        uint256 propertyId
+    ) public payable
+             onlyBooked(propertyId)
+             onlyPropertyGuest(propertyId)
     {
         properties[propertyId].guest = address(0);
     }

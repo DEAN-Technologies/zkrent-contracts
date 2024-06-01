@@ -114,4 +114,21 @@ describe("Rent", () => {
       expect((await rent.properties(0)).isActive).to.eq(false);
     })
   })
+
+  describe("#unBookPropertyByGuest", () => {
+    it("should set guest to address(0)", async() => {
+      await rent.listProperty("home", 
+                        "home address",
+                        "some description",
+                        "imgUrl",
+                        10,
+                        2,
+                        68);
+      expect((await rent.properties(0)).guest).to.eq("0x0000000000000000000000000000000000000000");
+      await rent.bookProperty(0, 86400000, 86400000 * 2, { value: 10} );
+      expect((await rent.properties(0)).guest).to.eq(OWNER);
+      await rent.unBookPropertyByGuest(0);
+      expect((await rent.properties(0)).guest).to.eq("0x0000000000000000000000000000000000000000");
+    })
+  })
 });
