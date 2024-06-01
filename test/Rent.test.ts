@@ -107,11 +107,28 @@ describe("Rent", () => {
                   10,
                   2,
                   68);
+      // Expect the property to be active
       expect((await rent.properties(0)).isActive).to.eq(true);
-      
+      // Unlisting the property by the owner
       await rent.unlistProperty(0);
-
+      // Expect the property to become inactive
       expect((await rent.properties(0)).isActive).to.eq(false);
+    })
+    
+    it("should not unlist (caller is not an owner)", async () => {
+      await rent.listProperty("home", 
+                  "home address",
+                  "some description",
+                  "imgUrl",
+                  10,
+                  2,
+                  68);
+      // Expect the property to be active
+      expect((await rent.properties(0)).isActive).to.eq(true);
+      // Trying to unlist without ownership
+      await expect(rent.connect(SECOND).unlistProperty(0)).to.revertedWith("Only property owner");
+      // Expect the property to stay active
+      expect((await rent.properties(0)).isActive).to.eq(true);
     })
   })
 
@@ -124,11 +141,42 @@ describe("Rent", () => {
                         10,
                         2,
                         68);
+      // Guest address equals 0 - no one has booked the property
       expect((await rent.properties(0)).guest).to.eq("0x0000000000000000000000000000000000000000");
-      await rent.bookProperty(0, 86400000, 86400000 * 2, { value: 10} );
-      expect((await rent.properties(0)).guest).to.eq(OWNER);
-      await rent.unBookPropertyByGuest(0);
+      // Send transaction to book the property by the SECOND 
+      await rent.connect(SECOND).bookProperty(0, 86400000, 86400000 * 2, { value: 10} );
+      // Expect the property guest to be equal to the SECOND address.
+      expect((await rent.properties(0)).guest).to.eq(SECOND);
+      // Expect unBookByGuest to revert when called from OWNER address (SECOND is the guest)
+      await expect((rent.unBookPropertyByGuest(0))).to.revertedWith("Only property guest");
+      // Should correctly unbook
+      await rent.connect(SECOND).unBookPropertyByGuest(0);
+      // Property guest is address(0)
       expect((await rent.properties(0)).guest).to.eq("0x0000000000000000000000000000000000000000");
     })
   })
+
+  describe("#unBookPropertyByOwner", () => {
+    it("should set guest to address(0) and return rent payment", async() => {
+      await rent.listProperty("home", 
+                        "home address",
+                        "some description",
+                        "imgUrl",
+                        10,
+                        2,
+                        68);
+      // Except newly created property to guest == address(0)
+      expect((await rent.properties(0)).guest).to.eq("0x0000000000000000000000000000000000000000");
+      // Booking property by the SECOND
+      await rent.connect(SECOND).bookProperty(0, 86400000, 86400000 * 2, { value: 10} );
+      // Expect the SECOND account to be a property guest
+      expect((await rent.properties(0)).guest).to.eq(SECOND);
+      // Expect owner to unbook the property and return the deposit to the guest
+      await expect(rent.unBookPropertyByOwner(0, {value: 10})).to.changeEtherBalance(SECOND, 10);
+      // Expect the property guest to be address(0)
+      expect((await rent.properties(0)).guest).to.eq("0x0000000000000000000000000000000000000000");
+    })
+  })
+
+  // describe("#unBookPropertyByOwner")
 });
