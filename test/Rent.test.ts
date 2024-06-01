@@ -151,6 +151,26 @@ describe("Rent", () => {
       // Expect the property to stay active
       expect((await rent.properties(0)).isActive).to.eq(true);
     })
+
+    it("should not unlist (property is already unlisted)", async () => {
+      await rent.listProperty("home", 
+                  "home address",
+                  "some description",
+                  "imgUrl",
+                  10,
+                  2,
+                  68);
+      // Expect the property to be active
+      expect((await rent.properties(0)).isActive).to.eq(true);
+      // Trying to unlist (propertiy is booked)
+      await rent.unlistProperty(0);
+      // Expect the property to be inactive
+      expect((await rent.properties(0)).isActive).to.eq(false);
+      // Expect unlisting to revert
+      await expect(rent.unlistProperty(0)).to.revertedWith("Property has been already unlisted");
+      // Expect the property to stay inactive
+      expect((await rent.properties(0)).isActive).to.eq(false);
+    })
     
   })
 
