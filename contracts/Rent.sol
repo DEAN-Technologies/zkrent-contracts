@@ -147,9 +147,19 @@ contract Rent {
         uint256 propertyId
     ) public view onlyBooked(propertyId) returns (uint256) {
         Property storage property = properties[propertyId];
+        
+        return getDuePrice(propertyId, property.bookingStartsAt, property.bookingEndsAt);
+    }
 
-        uint64 numberOfDays = (property.bookingEndsAt - property.bookingStartsAt) / 86400000;
-        return numberOfDays * properties[propertyId].pricePerDay;
+    function getDuePrice(
+        uint256 id,
+        uint256 startDate,
+        uint256 endDate
+    ) public view returns (uint256) {
+        Property storage property = properties[id];
+
+        uint256 numberOfDays = (endDate - startDate) / 86400000;
+        return numberOfDays * property.pricePerDay;
     }
 
     function unBookPropertyByOwner(
