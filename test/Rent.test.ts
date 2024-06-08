@@ -128,6 +128,8 @@ describe("Rent", () => {
                   68);
       // Expect the property to be active
       expect((await rent.properties(0)).isActive).to.eq(true);
+      // Whitelisting second account
+      await rent.addUserToWhitelist(SECOND);
       // Trying to unlist without ownership
       await expect(rent.connect(SECOND).unlistProperty(0)).to.revertedWith("Only property owner");
       // Expect the property to stay active
@@ -144,6 +146,8 @@ describe("Rent", () => {
                   68);
       // Expect the property to be active
       expect((await rent.properties(0)).isActive).to.eq(true);
+      // Whitelisting second account
+      await rent.addUserToWhitelist(SECOND);
       // Booking the property
       await rent.connect(SECOND).bookProperty(0, 86400000, 86400000 * 2, { value: 10} );
       // Trying to unlist (propertiy is booked)
@@ -185,6 +189,8 @@ describe("Rent", () => {
                         68);
       // Guest address equals 0 - no one has booked the property
       expect((await rent.properties(0)).guest).to.eq("0x0000000000000000000000000000000000000000");
+      // Whitelisting second account
+      await rent.addUserToWhitelist(SECOND);
       // Send transaction to book the property by the SECOND 
       await rent.connect(SECOND).bookProperty(0, 86400000, 86400000 * 2, { value: 10} );
       // Expect the property guest to be equal to the SECOND address.
@@ -209,6 +215,8 @@ describe("Rent", () => {
                         68);
       // Except newly created property to guest == address(0)
       expect((await rent.properties(0)).guest).to.eq("0x0000000000000000000000000000000000000000");
+      // Whitelisting second account
+      await rent.addUserToWhitelist(SECOND);
       // Booking property by the SECOND
       await rent.connect(SECOND).bookProperty(0, MILLISECONDS_IN_DAY, MILLISECONDS_IN_DAY * 2, { value: 10} );
       // Expect the SECOND account to be a property guest
@@ -217,6 +225,14 @@ describe("Rent", () => {
       await expect(rent.unBookPropertyByOwner(0, {value: 10})).to.changeEtherBalance(SECOND, 10);
       // Expect the property guest to be address(0)
       expect((await rent.properties(0)).guest).to.eq("0x0000000000000000000000000000000000000000");
+    })
+  })
+
+  describe("#addUserToWhitelist", () => {
+    it("should add user to whitelist", async() => {
+      expect(await rent.whitelist("0x0000000000000000000000000000000000123456")).to.eq(false);
+      await rent.addUserToWhitelist("0x0000000000000000000000000000000000123456");
+      expect(await rent.whitelist("0x0000000000000000000000000000000000123456")).to.eq(true);
     })
   })
 
@@ -229,6 +245,8 @@ describe("Rent", () => {
                         10,
                         2,
                         68);
+      // Whitelisting second account
+      await rent.addUserToWhitelist(SECOND);
       await rent.connect(SECOND).bookProperty(0, MILLISECONDS_IN_DAY, MILLISECONDS_IN_DAY * 2, { value: 10} );
       const price = rent.getPropertyRentPrice(0);
       expect(await price).to.eq(10);
@@ -246,7 +264,8 @@ describe("Rent", () => {
       const start = randomInt(100) * MILLISECONDS_IN_DAY;
       const end = randomInt(100) * MILLISECONDS_IN_DAY + start;
       const calculatedPrice = ((end - start) / MILLISECONDS_IN_DAY) * price;
-
+      // Whitelisting second account
+      await rent.addUserToWhitelist(SECOND);
       await rent.connect(SECOND).bookProperty(0, start, end, { value: calculatedPrice} );
 
       const contractPrice = rent.getPropertyRentPrice(0);

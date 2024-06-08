@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-contract Rent {
-    address public owner;
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+
+contract Rent is Ownable {
     uint256 public counter;
 
-    constructor() {
+    constructor() Ownable(msg.sender){
         counter = 0;
-        owner = msg.sender;
+        whitelist[msg.sender] = true;
     }
 
     struct Property {
@@ -67,7 +68,17 @@ contract Rent {
         _;
     }
 
+    modifier onlyWhitelisted() {
+        require(whitelist[msg.sender], "Only whitelisted");
+        _;
+    }
+
     mapping(uint256 => Property) public properties;
+    mapping(address => bool) public whitelist;
+
+    function addUserToWhitelist(address user) public onlyOwner {
+        whitelist[user] = true;
+    }
 
     function listProperty(
         string memory name,
@@ -77,7 +88,7 @@ contract Rent {
         uint256 pricePerDay,
         uint64 numberOfRooms,
         uint64 area
-    ) public returns (uint256) {
+    ) public onlyWhitelisted() returns (uint256) {
         Property storage newProperty = properties[counter];
 
         newProperty.name = name;
@@ -122,7 +133,7 @@ contract Rent {
         uint256 propertyId,
         uint64 startDate,
         uint64 endDate
-    ) public payable onlyNotBooked(propertyId) {
+    ) public payable onlyNotBooked(propertyId) onlyWhitelisted {
         uint64 numberOfDays = (endDate - startDate) / 86400000;
 
         require(
@@ -147,7 +158,7 @@ contract Rent {
         uint256 propertyId
     ) public view onlyBooked(propertyId) returns (uint256) {
         Property storage property = properties[propertyId];
-        
+
         return getDuePrice(propertyId, property.bookingStartsAt, property.bookingEndsAt);
     }
 
