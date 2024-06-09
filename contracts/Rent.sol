@@ -2,8 +2,9 @@
 pragma solidity ^0.8.19;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {RentStatistic} from "./RentStatistics.sol";
 
-contract Rent is Ownable {
+contract Rent is Ownable, RentStatistic {
     uint256 public counter;
 
     constructor() Ownable(msg.sender){
@@ -134,7 +135,8 @@ contract Rent is Ownable {
         uint64 startDate,
         uint64 endDate
     ) public payable onlyNotBooked(propertyId) onlyWhitelisted {
-        uint64 numberOfDays = (endDate - startDate) / 86400000;
+        // endDate and startDate are in milliseconds
+        uint64 numberOfDays = (endDate - startDate) / (1 days * 1000);
 
         require(
             msg.value >= numberOfDays * properties[propertyId].pricePerDay,
@@ -145,6 +147,11 @@ contract Rent is Ownable {
         properties[propertyId].bookingStartsAt = startDate;
         properties[propertyId].bookingEndsAt = endDate;
         properties[propertyId].guest = msg.sender;
+        
+        // Statistic update
+        updateStatistic(properties[propertyId].owner,
+                        properties[propertyId].guest,
+                        numberOfDays);
 
         emit PropertyBookedEvent(
             propertyId,
@@ -182,11 +189,18 @@ contract Rent is Ownable {
         uint256 rentPrice = getPropertyRentPrice(propertyId);
 
         require(
-            msg.value >= rentPrice,
-            "Send more ETH."
+            msg.value == rentPrice,
+            "ETH value not equal booking price"
         );
         payable(properties[propertyId].guest).transfer(msg.value);
 
+        uint64 numberOfDays = 
+            (properties[propertyId].bookingEndsAt - properties[propertyId].bookingStartsAt) / (1 days * 1000);
+
+        // Statistic revert
+        revertStatistic(properties[propertyId].owner,
+                        properties[propertyId].guest,
+                        numberOfDays);
         properties[propertyId].guest = address(0);
     }
 

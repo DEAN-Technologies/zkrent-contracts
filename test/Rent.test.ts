@@ -273,4 +273,50 @@ describe("Rent", () => {
       expect(await contractPrice).to.eq(calculatedPrice);
     })
   })
+  describe("#statistic", () => {
+    it("should correctly update statistic when booking property", async() => {
+      const price = 100;
+      await rent.listProperty("home", 
+                        "home address",
+                        "some description",
+                        "imgUrl",
+                        price,
+                        2,
+                        68);
+      // Whitelisting second account
+      await rent.addUserToWhitelist(SECOND);
+      
+      // Checking that statistic is empty
+      const statisticSecondNoRent = await rent.getStatistic.staticCall(SECOND);
+      expect(statisticSecondNoRent.totalEarned).to.eq(0);
+      expect(statisticSecondNoRent.totalSpent).to.eq(0);
+      expect(statisticSecondNoRent.daysBookedAsOwner).to.eq(0);
+      expect(statisticSecondNoRent.daysBookedAsGuest).to.eq(0);
+      expect(statisticSecondNoRent.timesBookedAsOwner).to.eq(0);
+      expect(statisticSecondNoRent.timesBookedAsGuest).to.eq(0);
+
+      const start = randomInt(100) * MILLISECONDS_IN_DAY;
+      const end = randomInt(100) * MILLISECONDS_IN_DAY + start;
+      const days = (end - start) / MILLISECONDS_IN_DAY;
+      const calculatedPrice = (days * price);
+
+      await rent.connect(SECOND).bookProperty(0, start, end, {value: calculatedPrice});
+      
+      const statisticSecondAfterRent = await rent.getStatistic.staticCall(SECOND);
+      expect(statisticSecondAfterRent.totalEarned).to.eq(0);
+      expect(statisticSecondAfterRent.totalSpent).to.eq(calculatedPrice);
+      expect(statisticSecondAfterRent.daysBookedAsOwner).to.eq(0);
+      expect(statisticSecondAfterRent.daysBookedAsGuest).to.eq(days);
+      expect(statisticSecondAfterRent.timesBookedAsOwner).to.eq(0);
+      expect(statisticSecondAfterRent.timesBookedAsGuest).to.eq(1);
+      
+      const statisticOwnerAfterRent = await rent.getStatistic.staticCall(OWNER);
+      expect(statisticOwnerAfterRent.totalEarned).to.eq(calculatedPrice);
+      expect(statisticOwnerAfterRent.totalSpent).to.eq(0);
+      expect(statisticOwnerAfterRent.daysBookedAsOwner).to.eq(days);
+      expect(statisticOwnerAfterRent.daysBookedAsGuest).to.eq(0);
+      expect(statisticOwnerAfterRent.timesBookedAsOwner).to.eq(1);
+      expect(statisticOwnerAfterRent.timesBookedAsGuest).to.eq(0);
+    })
+  })
 });
