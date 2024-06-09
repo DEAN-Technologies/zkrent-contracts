@@ -2,14 +2,7 @@
 pragma solidity ^0.8.19;
 
 contract RentStatistic {
-    mapping(address => uint256) public totalEarned;
-    mapping(address => uint256) public totalSpent;
-    
-    mapping(address => uint256) public daysBookedAsOwner;
-    mapping(address => uint256) public daysBookedAsGuest;
-
-    mapping(address => uint256) public timesBookedAsOwner;
-    mapping(address => uint256) public timesBookedAsGuest;
+    mapping(address => Statistic) public addressToStatistic;
 
     struct Statistic {
         uint256 totalEarned;
@@ -21,30 +14,29 @@ contract RentStatistic {
     }
 
     function getStatistic(address user) external view returns (Statistic memory statistic) {
-        statistic = Statistic(totalEarned[user],
-                                               totalSpent[user],
-                                               daysBookedAsOwner[user],
-                                               daysBookedAsGuest[user],
-                                               timesBookedAsOwner[user],
-                                               timesBookedAsGuest[user]);
+        statistic = addressToStatistic[user];
     }
 
     function updateStatistic(address owner, address guest, uint64 numberOfDays) internal {
-        totalEarned[owner] += msg.value;
-        totalSpent[guest] += msg.value;
-        daysBookedAsOwner[owner] += numberOfDays;
-        daysBookedAsGuest[guest] += numberOfDays;
-        timesBookedAsOwner[owner] += 1;
-        timesBookedAsGuest[guest] += 1;
+        Statistic storage ownerStatistic = addressToStatistic[owner];
+        Statistic storage guestStatistic = addressToStatistic[guest];
+        ownerStatistic.totalEarned += msg.value;
+        guestStatistic.totalSpent += msg.value;
+        ownerStatistic.daysBookedAsOwner += numberOfDays;
+        guestStatistic.daysBookedAsGuest += numberOfDays;
+        ownerStatistic.timesBookedAsOwner += 1;
+        guestStatistic.timesBookedAsGuest += 1;
     }
 
     function revertStatistic(address owner, address guest, uint64 numberOfDays) internal {
-        totalEarned[owner] -= msg.value;
-        totalSpent[guest] -= msg.value;
-        daysBookedAsOwner[owner] -= numberOfDays;
-        daysBookedAsGuest[guest] -= numberOfDays;
-        timesBookedAsOwner[owner] -= 1;
-        timesBookedAsGuest[guest] -= 1;
+        Statistic storage ownerStatistic = addressToStatistic[owner];
+        Statistic storage guestStatistic = addressToStatistic[guest];
+        ownerStatistic.totalEarned -= msg.value;
+        guestStatistic.totalSpent -= msg.value;
+        ownerStatistic.daysBookedAsOwner -= numberOfDays;
+        guestStatistic.daysBookedAsGuest -= numberOfDays;
+        ownerStatistic.timesBookedAsOwner -= 1;
+        guestStatistic.timesBookedAsGuest -= 1;
     }
     
 }
