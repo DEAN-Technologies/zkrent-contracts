@@ -129,7 +129,6 @@ contract Rent is Ownable, RentStatistic {
         property.isActive = false;
     }
 
-
     function bookProperty(
         uint256 propertyId,
         uint64 startDate,

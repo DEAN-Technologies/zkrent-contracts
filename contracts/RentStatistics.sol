@@ -38,5 +38,4 @@ contract RentStatistic {
         ownerStatistic.timesBookedAsOwner -= 1;
         guestStatistic.timesBookedAsGuest -= 1;
     }
-    
 }

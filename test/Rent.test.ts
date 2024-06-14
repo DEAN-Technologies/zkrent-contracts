@@ -288,12 +288,7 @@ describe("Rent", () => {
       
       // Checking that statistic is empty
       const statisticSecondNoRent = await rent.getStatistic.staticCall(SECOND);
-      expect(statisticSecondNoRent.totalEarned).to.eq(0);
-      expect(statisticSecondNoRent.totalSpent).to.eq(0);
-      expect(statisticSecondNoRent.daysBookedAsOwner).to.eq(0);
-      expect(statisticSecondNoRent.daysBookedAsGuest).to.eq(0);
-      expect(statisticSecondNoRent.timesBookedAsOwner).to.eq(0);
-      expect(statisticSecondNoRent.timesBookedAsGuest).to.eq(0);
+      expect(statisticSecondNoRent).to.deep.eq([0, 0, 0, 0, 0, 0]);
 
       const start = randomInt(100) * MILLISECONDS_IN_DAY;
       const end = randomInt(100) * MILLISECONDS_IN_DAY + start;
